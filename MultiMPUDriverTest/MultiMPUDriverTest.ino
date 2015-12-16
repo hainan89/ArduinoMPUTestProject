@@ -1,4 +1,5 @@
 #include <avr/pgmspace.h>
+#include <SoftwareSerial.h>
 #include <MPUDriver.h>
 
 unsigned char HW_addr;
@@ -21,15 +22,27 @@ uint8_t read_r;
 uint8_t ncs_l[MPUNUM] = {10, 9, 8, 7};
 uint8_t current_mpu = 0;
 
+// HC05 RXD <-> 11  // 5
+// HC05 TXD <-> 10  // 4
+#define BT_SERIAL_TX 4
+/* to communicate with the Bluetooth module's RXD pin */
+#define BT_SERIAL_RX 5
+/* Initialise the software serial port */
+SoftwareSerial BluetoothSerial(BT_SERIAL_TX, BT_SERIAL_RX);
+
 void setup() {
 
   SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
   SPI.begin();
   
 
-  Serial.begin(115200);
+  //Serial.begin(115200);
+  Serial.begin(57600); // 为了配合Bluetooth传输，降低Baud
   while (!Serial);
 
+  BluetoothSerial.begin(57600);
+  BluetoothSerial.println("Blt Started.");
+  
   for (uint8_t i = 0 ; i < MPUNUM; i++)
   {
     pinMode(ncs_l[i], OUTPUT);
@@ -123,6 +136,14 @@ void loop() {
       Serial.print("\t");
       Serial.print(gyro[2]);
 
+      BluetoothSerial.print(current_mpu);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(gyro[0]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(gyro[1]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(gyro[2]);
+
       //          accel_f[0] = (float)accel[0] / 32768 * 2;
       //          accel_f[1] = (float)accel[1] / 32768 * 2;
       //          accel_f[2] = (float)accel[2] / 32768 * 2;
@@ -133,6 +154,14 @@ void loop() {
       Serial.print(accel[1]);
       Serial.print("\t");
       Serial.print(accel[2]);
+
+      BluetoothSerial.print("\t");
+      //Serial.print("# ");
+      BluetoothSerial.print(accel[0]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(accel[1]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(accel[2]);
 
       //2,147,483,648
       //          quat_f[0] = (float)quat[0] / 2147483647;
@@ -146,9 +175,16 @@ void loop() {
       Serial.print("\t");
       Serial.print(quat[2]);
       Serial.print("\t");
-      Serial.print(quat[3]);
+      Serial.println(quat[3]);
 
-      Serial.println();
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(quat[0]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(quat[1]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.print(quat[2]);
+      BluetoothSerial.print("\t");
+      BluetoothSerial.println(quat[3]);
     }
     current_mpu ++;
   }
